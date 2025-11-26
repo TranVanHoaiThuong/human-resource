@@ -20,7 +20,8 @@ class DashboardController extends Controller
         return $this->response->view('dashboard/index', [
             'stats' => $stats,
             'active_menu' => 'dashboard',
-            'user' => $_SESSION['user'] ?? null
+            'user' => $_SESSION['user'] ?? null,
+            'page' => 'dashboard'
         ], 'Dashboard');
     }
 }

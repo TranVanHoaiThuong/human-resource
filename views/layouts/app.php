@@ -10,7 +10,7 @@
     <!-- Page specific CSS -->
     <?= $this->section('styles') ?>
 </head>
-<body class="app-layout">
+<body class="app-layout" data-page="<?= $this->e($page ?? '') ?>">
     <!-- Header -->
     <?= $this->insert('layouts/partials/header', [
         'user' => $user ?? null

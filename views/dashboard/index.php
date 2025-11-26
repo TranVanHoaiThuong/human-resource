@@ -31,3 +31,7 @@
         </div>
     </div>
 </div>
+
+<?= $this->start('scripts') ?>
+<script src="<?= $this->public('/js/dashboard/dashboard') ?>"></script>
+<?= $this->end() ?>
