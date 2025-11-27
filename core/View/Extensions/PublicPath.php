@@ -6,7 +6,7 @@ use League\Plates\Engine;
 use League\Plates\Extension\ExtensionInterface;
 
 class PublicPath implements ExtensionInterface {
-    private string $path = 'public/';
+    private string $path = '/public/';
 
     public function __construct() {}
 

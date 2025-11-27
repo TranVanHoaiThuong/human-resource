@@ -15,26 +15,27 @@ use League\Route\Router;
 use Laminas\Diactoros\ServerRequestFactory;
 use League\Route\Strategy\ApplicationStrategy;
 use App\Core\Application;
+use App\Core\ErrorHandler;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-// 1. Bootstrap Application
 $app = new Application(__DIR__);
 $app->bootstrap();
 $container = $app->getContainer();
 
-// 2. Setup Router với Container Strategy
+$errorHandler = new ErrorHandler(__DIR__);
+$errorHandler->register();
+$errorHandler->setViewEngine($container->get('view.engine'));
+
 $strategy = new ApplicationStrategy();
 $strategy->setContainer($container);
 
 $router = new Router();
 $router->setStrategy($strategy);
 
-// 3. Load routes
 $routeSetup = require __DIR__ . '/routes/web.php';
 $routeSetup($router, $container);
 
-// 4. Dispatch request
 $request = ServerRequestFactory::fromGlobals();
 $response = $router->dispatch($request);
 

@@ -41,6 +41,11 @@ class Controller
     protected Connection $db;
 
     /**
+     * @var Container DI Container
+     */
+    protected Container $container;
+
+    /**
      * Constructor
      *
      * Inject các dependencies cơ bản mà hầu hết controllers cần.
@@ -51,9 +56,11 @@ class Controller
      */
     public function __construct(
         ResponseFactory $response,
-        Connection $db
+        Connection $db,
+        Container $container
     ) {
         $this->response = $response;
         $this->db = $db;
+        $this->container = $container;
     }
 }

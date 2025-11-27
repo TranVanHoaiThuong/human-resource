@@ -2,6 +2,7 @@
 
 namespace App\Core;
 
+use App\Core\View\Extensions\AssetsPath;
 use App\Core\View\Extensions\PublicPath;
 use Dotenv\Dotenv;
 use Doctrine\DBAL\DriverManager;
@@ -164,8 +165,8 @@ class Application
     {
         $this->container->singleton('view.engine', function ($c) {
             $engine = new Engine($this->basePath . '/views');
-            $engine->loadExtension(new \League\Plates\Extension\Asset('assets'));
             $engine->loadExtension(new PublicPath());
+            $engine->loadExtension(new AssetsPath());
             return $engine;
         });
 
