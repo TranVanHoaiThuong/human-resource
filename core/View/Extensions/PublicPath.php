@@ -21,6 +21,9 @@ class PublicPath implements ExtensionInterface {
         if(str_starts_with($filePath, 'js/') && !str_contains($filePath, '.min.js')) {
             $filePath .= '.min.js';
         }
+        if(str_starts_with($filePath, 'css/') && !str_contains($filePath, '.min.css')) {
+            $filePath .= '.min.css';
+        }
         return $this->path . $filePath;
     }
 }

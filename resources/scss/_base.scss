@@ -1,0 +1,9 @@
+@use 'variables' as vars;
+@use 'mixins';
+
+body {
+    font-family: vars.$font-family;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}

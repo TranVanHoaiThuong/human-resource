@@ -1,0 +1,13 @@
+@use 'variables' as vars;
+
+@mixin button-style {
+  background: vars.$primary-color;
+  font-family: vars.$font-family;
+  padding: vars.$spacing-unit * 2;
+}
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

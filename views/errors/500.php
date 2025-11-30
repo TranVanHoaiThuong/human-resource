@@ -1,9 +1,9 @@
 <?php $this->layout('layouts/app') ?>
 
-<div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
+<div class="flex items-center justify-center min-h-[60vh]">
     <div class="text-center">
-        <h1 class="display-1 text-danger">500</h1>
-        <p class="lead">Có lỗi xảy ra trong quá trình xử lý</p>
-        <a href="javascript:history.back()" class="btn btn-primary">← Quay lại</a>
+        <h1 class="text-8xl font-bold text-red-500">500</h1>
+        <p class="text-xl text-gray-600 mt-4 mb-6">Có lỗi xảy ra trong quá trình xử lýi</p>
+        <a href="/" class="btn btn-primary">← Quay lại</a>
     </div>
 </div>

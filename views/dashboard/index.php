@@ -1,34 +1,22 @@
 <?php $this->layout('layouts/app', $this->data) ?>
 
-<div class="row">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <!-- Tổng số nhân viên -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Tổng nhân viên</h5>
-                <h2><?= $stats['total_employees'] ?></h2>
-            </div>
-        </div>
+    <div class="card">
+        <h5 class="text-gray-600 text-sm font-medium mb-2">Tổng nhân viên</h5>
+        <h2 class="text-3xl font-bold text-gray-800"><?= $stats['total_employees'] ?></h2>
     </div>
     
     <!-- Có mặt hôm nay -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Có mặt hôm nay</h5>
-                <h2><?= $stats['present_today'] ?></h2>
-            </div>
-        </div>
+    <div class="card">
+        <h5 class="text-gray-600 text-sm font-medium mb-2">Có mặt hôm nay</h5>
+        <h2 class="text-3xl font-bold text-green-600"><?= $stats['present_today'] ?></h2>
     </div>
     
     <!-- Đang nghỉ phép -->
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">Đang nghỉ phép</h5>
-                <h2><?= $stats['on_leave'] ?></h2>
-            </div>
-        </div>
+    <div class="card">
+        <h5 class="text-gray-600 text-sm font-medium mb-2">Đang nghỉ phép</h5>
+        <h2 class="text-3xl font-bold text-orange-500"><?= $stats['on_leave'] ?></h2>
     </div>
 </div>
 
