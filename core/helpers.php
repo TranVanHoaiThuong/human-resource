@@ -137,3 +137,51 @@ if (!function_exists('relative_time')) {
     }
 }
 
+if (!function_exists('__')) {
+    /**
+     * Translate shorthand
+     * 
+     * @example
+     * __('user.username')                    // "Tên đăng nhập"
+     * __('common.welcome', ['name' => 'An']) // "Chào An"
+     */
+    function __(string $key, array $replace = []): string
+    {
+        global $container;
+        
+        if (!$container || !$container->has(App\Core\Translator::class)) {
+            return $key;
+        }
+        
+        return $container->get(App\Core\Translator::class)->get($key, $replace);
+    }
+}
+
+if (!function_exists('trans')) {
+    /**
+     * Alias for __()
+     */
+    function trans(string $key, array $replace = []): string
+    {
+        return __($key, $replace);
+    }
+}
+
+if (!function_exists('trans_module')) {
+    /**
+     * Get entire module translations (for JS)
+     * 
+     * @example
+     * trans_module('user')  // ['username' => 'Tên đăng nhập', ...]
+     */
+    function trans_module(string $module): array
+    {
+        global $container;
+        
+        if (!$container || !$container->has(App\Core\Translator::class)) {
+            return [];
+        }
+        
+        return $container->get(App\Core\Translator::class)->getModule($module);
+    }
+}

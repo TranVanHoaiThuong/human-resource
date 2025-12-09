@@ -22,6 +22,6 @@ class DashboardController extends Controller
             'active_menu' => 'dashboard',
             'user' => $_SESSION['user'] ?? null,
             'page' => 'dashboard'
-        ], 'Dashboard');
+        ], trans('dashboard.title'));
     }
 }

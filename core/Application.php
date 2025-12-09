@@ -78,6 +78,7 @@ class Application
         $this->registerViewEngine();
         $this->registerViewServices();
         $this->registerHttpServices();
+        $this->registerTranslator();
 
         $this->bootstrapped = true;
     }
@@ -154,6 +155,22 @@ class Application
                 }
             }
         });
+    }
+
+    /**
+     * Đăng ký Translator vào container
+     * 
+     * @return void
+     */
+    protected function registerTranslator(): void
+    {
+        $this->container->singleton(Translator::class, function ($c) {
+            $locale = $_ENV['APP_LOCALE'] ?? 'vi';
+            return new Translator($this->basePath, $locale);
+        });
+        
+        // Alias
+        $this->container->singleton('translator', fn($c) => $c->get(Translator::class));
     }
 
     /**
