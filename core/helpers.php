@@ -108,3 +108,32 @@ if (!function_exists('dump')) {
     }
 }
 
+if (!function_exists('user_datetime')) {
+    /**
+     * Convert datetime sang timezone của user
+     * 
+     * @param string|null $datetime
+     * @param string|null $userTimezone
+     * @param string $format
+     * @return string|null
+     */
+    function user_datetime(?string $datetime, ?string $userTimezone = null, string $format = 'd/m/Y H:i'): ?string
+    {
+        return \App\Core\DateTimeHelper::format($datetime, $userTimezone, $format);
+    }
+}
+
+if (!function_exists('relative_time')) {
+    /**
+     * Format relative time
+     * 
+     * @param string|null $datetime
+     * @param string|null $userTimezone
+     * @return string|null
+     */
+    function relative_time(?string $datetime, ?string $userTimezone = null): ?string
+    {
+        return \App\Core\DateTimeHelper::relative($datetime, $userTimezone);
+    }
+}
+
