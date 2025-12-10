@@ -7,8 +7,11 @@ use League\Plates\Extension\ExtensionInterface;
 
 class PublicPath implements ExtensionInterface {
     private string $path = '/public/';
+    private string $basePath;
 
-    public function __construct() {}
+    public function __construct(string $basePath = '') {
+        $this->basePath = $basePath ?: dirname(__DIR__, 3);
+    }
 
     public function register(Engine $engine)
     {
@@ -24,6 +27,11 @@ class PublicPath implements ExtensionInterface {
         if(str_starts_with($filePath, 'css/') && !str_contains($filePath, '.min.css')) {
             $filePath .= '.min.css';
         }
-        return $this->path . $filePath;
+        $fullPath = $this->basePath . '/public/' . $filePath;
+        $version = '';
+        if (file_exists($fullPath)) {
+            $version = '?v=' . filemtime($fullPath);
+        }
+        return $this->path . $filePath . $version;
     }
 }

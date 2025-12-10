@@ -4,31 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $this->e($title) ?></title>
-    
-    <!-- CSS -->
-    <link rel="stylesheet" href="<?= $this->asset('/bootstrap-5/css/bootstrap.min.css') ?>">
-    <link rel="stylesheet" href="<?= $wwwroot ?>/assets/css/auth.css">
+    <link rel="icon" href="<?= $wwwroot ?>/assets/images/favicon.ico">
+    <link rel="stylesheet" href="<?= $this->asset('/alertifyjs/css/alertify.min.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/alertifyjs/css/themes/default.min.css') ?>">
+    <link rel="stylesheet" href="<?= $this->asset('/fontawesome/css/all.min.css') ?>" />
+    <link rel="stylesheet" href="<?= $this->public('/css/tailwind') ?>">
+    <link rel="stylesheet" href="<?= $this->public('/css/app') ?>">
 </head>
-<body class="auth-page">
-    <div class="auth-container">
-        <div class="auth-card">
-            <!-- Logo -->
-            <div class="auth-logo text-center mb-4">
-                <img src="<?= $wwwroot ?>/assets/images/logo.png" alt="HRM" height="60">
-                <h3 class="mt-3">HRM System</h3>
-            </div>
-            
-            <!-- Content -->
-            <?= $this->section('content') ?>
-        </div>
-        
-        <!-- Footer -->
-        <div class="auth-footer text-center mt-4">
-            <p class="text-muted">&copy; <?= date('Y') ?> HRM System</p>
-        </div>
-    </div>
-    
-    <!-- Scripts -->
-    <script src="<?= $this->asset('/bootstrap-5/js/bootstrap.bundle.min.js') ?>"></script>
+<body class="min-h-screen">
+    <?= $this->section('content') ?>
+
+    <script src="<?= $this->asset('/jquery/jquery.min.js') ?>"></script>
+    <script src="<?= $this->asset('/alertifyjs/alertify.min.js') ?>"></script>
+    <?= $this->section('scripts') ?>
 </body>
 </html>

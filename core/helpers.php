@@ -185,3 +185,58 @@ if (!function_exists('trans_module')) {
         return $container->get(App\Core\Translator::class)->getModule($module);
     }
 }
+
+if (!function_exists('auth')) {
+    /**
+     * Get Auth instance or authenticated user
+     * 
+     * @return \App\Core\Auth\Auth
+     */
+    function auth(): \App\Core\Auth\Auth
+    {
+        global $app;
+        return $app->getContainer()->get(\App\Core\Auth\Auth::class);
+    }
+}
+
+if (!function_exists('user')) {
+    /**
+     * Get current authenticated user
+     * 
+     * @return array|null
+     */
+    function user(): ?array
+    {
+        return auth()->user();
+    }
+}
+
+if (!function_exists('user_id')) {
+    /**
+     * Get current authenticated user ID
+     * 
+     * @return int|null
+     */
+    function user_id(): ?int
+    {
+        return auth()->id();
+    }
+}
+
+if (!function_exists('flash')) {
+    function flash(string $key, ?string $value = null): mixed
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        if ($value === null) {
+            $val = $_SESSION['_flash'][$key] ?? null;
+            unset($_SESSION['_flash'][$key]);
+            return $val;
+        }
+
+        $_SESSION['_flash'][$key] = $value;
+        return null;
+    }
+}

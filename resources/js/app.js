@@ -7,3 +7,16 @@ Alpine.plugin(focus);
 
 window.Alpine = Alpine;
 Alpine.start();
+
+// Ajax setup
+$.ajaxSetup({
+    beforeSend: function() {
+
+    },
+    complete: function() {
+
+    },
+    error: function(xhr) {
+        console.log(xhr);
+    }
+});

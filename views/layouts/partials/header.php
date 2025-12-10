@@ -28,9 +28,12 @@
                     <a href="/profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Hồ sơ</a>
                     <a href="/settings" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Cài đặt</a>
                     <hr class="my-1 border-gray-200">
-                    <a href="/logout" class="block px-4 py-2 text-red-600 hover:bg-gray-100">Đăng xuất</a>
+                    <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                        <?= __('auth.signout') ?>
+                    </a>
                 </div>
             </div>
         </div>
     </div>
+    <form id="logout-form" action="/logout" method="POST" style="display:none;"></form>
 </header>

@@ -14,16 +14,21 @@
 
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
+use App\Core\Auth\AuthMiddleWare;
 use League\Route\Router;
 use App\Core\Container;
 
 return function(Router $router, Container $container) {
-    // Root redirect to dashboard
-    $router->get('/', route($container, DashboardController::class, 'index'));
-    
-    // Dashboard route
-    $router->get('/dashboard', route($container, DashboardController::class, 'index'));
+    $auth = $container->get(App\Core\Auth\Auth::class);
 
     // Auth
-    $router->get('/login', route($container, AuthController::class, 'index'));
+    $router->get('/login', route($container, AuthController::class, 'showLogin'));
+    $router->post('/login', route($container, AuthController::class, 'login'));
+    $router->post('/logout', route($container, AuthController::class, 'logout'));
+
+    $router->group('', function($group) use ($container) {
+        // Root redirect to dashboard
+        $group->get('/', route($container, DashboardController::class, 'index'));
+        $group->get('/dashboard', route($container, DashboardController::class, 'index'));
+    })->middleware(new AuthMiddleWare($auth));
 };

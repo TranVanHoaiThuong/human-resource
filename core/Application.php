@@ -2,6 +2,8 @@
 
 namespace App\Core;
 
+use App\Core\Auth\Auth;
+use App\Core\Auth\AuthMiddleWare;
 use App\Core\View\Extensions\AssetsPath;
 use App\Core\View\Extensions\PublicPath;
 use Dotenv\Dotenv;
@@ -75,6 +77,7 @@ class Application
         $this->loadEnvironment();
         $this->registerConfig();
         $this->registerDatabase();
+        $this->registerAuth();
         $this->registerViewEngine();
         $this->registerViewServices();
         $this->registerHttpServices();
@@ -174,6 +177,29 @@ class Application
     }
 
     /**
+     * Đăng ký Auth service vào container
+     */
+    protected function registerAuth(): void
+    {
+        // Start session (cần cho intended URL)
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        $this->container->singleton(Auth::class, function ($c) {
+            return new Auth($c->get('db'));
+        });
+        
+        // Alias
+        $this->container->singleton('auth', fn($c) => $c->get(Auth::class));
+        
+        // Middleware
+        $this->container->bind(AuthMiddleWare::class, function ($c) {
+            return new AuthMiddleWare($c->get(Auth::class));
+        });
+    }
+
+    /**
      * Đăng ký View Engine (Plates) vào container
      * 
      * @return void
@@ -182,7 +208,7 @@ class Application
     {
         $this->container->singleton('view.engine', function ($c) {
             $engine = new Engine($this->basePath . '/views');
-            $engine->loadExtension(new PublicPath());
+            $engine->loadExtension(new PublicPath($this->basePath));
             $engine->loadExtension(new AssetsPath());
             return $engine;
         });
