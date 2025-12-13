@@ -31,21 +31,6 @@ use Doctrine\DBAL\Connection;
 class Controller
 {
     /**
-     * @var ResponseFactory Response factory để tạo responses
-     */
-    protected ResponseFactory $response;
-
-    /**
-     * @var Connection Database connection
-     */
-    protected Connection $db;
-
-    /**
-     * @var Container DI Container
-     */
-    protected Container $container;
-
-    /**
      * Constructor
      *
      * Inject các dependencies cơ bản mà hầu hết controllers cần.
@@ -53,11 +38,12 @@ class Controller
      *
      * @param ResponseFactory $response Response factory
      * @param Connection $db Database connection
+     * @param Container $container DI Container
      */
     public function __construct(
-        ResponseFactory $response,
-        Connection $db,
-        Container $container
+        protected ResponseFactory $response,
+        protected Connection $db,
+        protected Container $container
     ) {
         $this->response = $response;
         $this->db = $db;

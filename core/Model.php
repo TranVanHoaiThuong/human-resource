@@ -4,6 +4,7 @@ namespace App\Core;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use App\Core\Database\Transaction;
 
 /**
  * Base Model
@@ -234,5 +235,30 @@ abstract class Model
     public function getConnection(): Connection
     {
         return $this->db;
+    }
+
+    // ==================== Transaction Methods ====================
+
+    /**
+     * Chạy callback trong transaction
+     * Tự động rollback nếu có exception
+     * 
+     * @param callable $callback
+     * @return mixed
+     */
+    public function transaction(callable $callback): mixed
+    {
+        $transaction = new Transaction($this->db);
+        return $transaction->transaction($callback);
+    }
+
+    /**
+     * Lấy transaction helper
+     * 
+     * @return Transaction
+     */
+    public function getTransaction(): Transaction
+    {
+        return new Transaction($this->db);
     }
 }

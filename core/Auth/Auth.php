@@ -3,10 +3,12 @@
 namespace App\Core\Auth;
 
 use Doctrine\DBAL\Connection;
+use App\Core\Logging\Logger;
 
 class Auth
 {
     protected Connection $db;
+    protected ?Logger $logger;
     protected ?array $user = null;
     protected ?string $currentToken = null;
     protected bool $userLoaded = false;
@@ -16,9 +18,10 @@ class Auth
     protected int $sessionLifetime = 86400 * 7; // 7 days
     protected int $rememberLifetime = 86400 * 30; // 30 days
 
-    public function __construct(Connection $db)
+    public function __construct(Connection $db, ?Logger $logger = null)
     {
         $this->db = $db;
+        $this->logger = $logger;
         $this->loadUserFromCookie();
     }
 
@@ -33,6 +36,12 @@ class Auth
         );
 
         if (!$user || !password_verify($password, $user['password'])) {
+            if ($this->logger) {
+                $this->logger->warning('Login attempt failed', [
+                    'username' => $username,
+                    'ip' => $this->getClientIp(),
+                ]);
+            }
             return false;
         }
 
@@ -42,6 +51,14 @@ class Auth
         
         $this->user = $user;
         $this->currentToken = $token;
+        
+        if ($this->logger) {
+            $this->logger->info('User logged in', [
+                'user_id' => $user['id'],
+                'username' => $username,
+                'ip' => $this->getClientIp(),
+            ]);
+        }
         
         return true;
     }

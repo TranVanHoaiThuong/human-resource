@@ -2,33 +2,17 @@
 
 namespace App\Core;
 
-use App\Core\Auth\Auth;
-use App\Core\Auth\AuthMiddleWare;
-use App\Core\View\Extensions\AssetsPath;
-use App\Core\View\Extensions\PublicPath;
 use Dotenv\Dotenv;
-use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\Connection;
-use League\Plates\Engine;
-use stdClass;
-use App\Core\View\ViewFactory;
-use App\Core\View\ViewRenderer;
-use App\Core\Http\ResponseFactory;
+use App\Core\Providers\ConfigServiceProvider;
+use App\Core\Providers\LoggingServiceProvider;
+use App\Core\Providers\DatabaseServiceProvider;
+use App\Core\Providers\AuthServiceProvider;
+use App\Core\Providers\ViewServiceProvider;
+use App\Core\Providers\HttpServiceProvider;
+use App\Core\Providers\TranslatorServiceProvider;
 
 /**
  * Application Class
- * 
- * Class chính để khởi tạo và quản lý ứng dụng.
- * Chịu trách nhiệm:
- * - Load environment variables
- * - Khởi tạo Container
- * - Đăng ký các services cơ bản (DB, View Engine, Config)
- * - Bootstrap ứng dụng
- * 
- * @example
- * $app = new Application(__DIR__);
- * $app->bootstrap();
- * $container = $app->getContainer();
  */
 class Application
 {
@@ -38,33 +22,42 @@ class Application
     protected Container $container;
 
     /**
-     * @var string Đường dẫn gốc của ứng dụng
-     */
-    protected string $basePath;
-
-    /**
-     * @var bool Đánh dấu app đã được bootstrap chưa
+     * @var bool App is bootstrapped
      */
     protected bool $bootstrapped = false;
 
     /**
-     * Khởi tạo Application
-     * 
-     * @param string $basePath Đường dẫn gốc của ứng dụng
+     * List of service providers
+     * @var array<string>
      */
-    public function __construct(string $basePath)
+    protected array $providers = [
+        ConfigServiceProvider::class,
+        LoggingServiceProvider::class,
+        DatabaseServiceProvider::class,
+        AuthServiceProvider::class,
+        ViewServiceProvider::class,
+        HttpServiceProvider::class,
+        TranslatorServiceProvider::class,
+    ];
+
+    /**
+     * Constructor - Init Application
+     * 
+     * @param string $basePath Path of app. Example: __DIR__
+     */
+    public function __construct(protected string $basePath)
     {
         $this->basePath = rtrim($basePath, '/');
         $this->container = new Container();
         
-        // Đăng ký chính Application vào container
+        // Register Application instance into container
         $this->container->instance(Application::class, $this);
         $this->container->instance(Container::class, $this->container);
     }
 
     /**
-     * Bootstrap ứng dụng
-     * Load config, đăng ký services
+     * Bootstrap Application
+     * Load config, register service providers, boot services
      * 
      * @return void
      */
@@ -75,19 +68,14 @@ class Application
         }
 
         $this->loadEnvironment();
-        $this->registerConfig();
-        $this->registerDatabase();
-        $this->registerAuth();
-        $this->registerViewEngine();
-        $this->registerViewServices();
-        $this->registerHttpServices();
-        $this->registerTranslator();
+        $this->registerServiceProviders();
+        $this->bootServiceProviders();
 
         $this->bootstrapped = true;
     }
 
     /**
-     * Load environment variables từ file .env
+     * Load environment variables from .env
      * 
      * @return void
      */
@@ -98,167 +86,52 @@ class Application
     }
 
     /**
-     * Đăng ký Config vào container
+     * Register all service providers
      * 
      * @return void
      */
-    protected function registerConfig(): void
+    protected function registerServiceProviders(): void
     {
-        $this->container->singleton('config', function ($c) {
-            $config = new stdClass();
-            
-            $config->dirroot = $this->basePath;
-            $config->dbdriver = 'pgsql';
-            $config->dbname = $_ENV['DB_NAME'];
-            $config->dbuser = $_ENV['DB_USER'];
-            $config->dbpass = $_ENV['DB_PASSWORD'];
-            $config->dbhost = $_ENV['DB_HOST'];
-            $config->dbport = $_ENV['DB_PORT'] ?? 5432;
-            $config->wwwroot = $_ENV['WWWROOT'];
-            
-            return $config;
-        });
-    }
-
-    /**
-     * Đăng ký Database connection vào container
-     * 
-     * @return void
-     */
-    protected function registerDatabase(): void
-    {
-        $this->container->singleton('db', function ($c) {
-            $config = $c->get('config');
-            
-            try {
-                $connection = DriverManager::getConnection([
-                    'dbname' => $config->dbname,
-                    'user' => $config->dbuser,
-                    'password' => $config->dbpass,
-                    'host' => $config->dbhost,
-                    'driver' => $config->dbdriver,
-                    'port' => $config->dbport,
-                ]);
-                
-                return $connection;
-            } catch (\Throwable $th) {
-                die('Database connection failed: ' . $th->getMessage());
-            }
-        });
-
-        // Alias cho Connection class
-        $this->container->singleton(Connection::class, fn($c) => $c->get('db'));
-
-        // Đăng ký shutdown function để đóng connection
-        register_shutdown_function(function () {
-            if ($this->container->has('db')) {
-                $db = $this->container->get('db');
-                if ($db instanceof Connection && $db->isConnected()) {
-                    $db->close();
-                }
-            }
-        });
-    }
-
-    /**
-     * Đăng ký Translator vào container
-     * 
-     * @return void
-     */
-    protected function registerTranslator(): void
-    {
-        $this->container->singleton(Translator::class, function ($c) {
-            $locale = $_ENV['APP_LOCALE'] ?? 'vi';
-            return new Translator($this->basePath, $locale);
-        });
-        
-        // Alias
-        $this->container->singleton('translator', fn($c) => $c->get(Translator::class));
-    }
-
-    /**
-     * Đăng ký Auth service vào container
-     */
-    protected function registerAuth(): void
-    {
-        // Start session (cần cho intended URL)
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        foreach ($this->providers as $providerClass) {
+            $provider = new $providerClass($this->basePath);
+            $provider->register($this->container);
         }
-        
-        $this->container->singleton(Auth::class, function ($c) {
-            return new Auth($c->get('db'));
-        });
-        
-        // Alias
-        $this->container->singleton('auth', fn($c) => $c->get(Auth::class));
-        
-        // Middleware
-        $this->container->bind(AuthMiddleWare::class, function ($c) {
-            return new AuthMiddleWare($c->get(Auth::class));
-        });
     }
 
     /**
-     * Đăng ký View Engine (Plates) vào container
+     * Boot all service providers
      * 
      * @return void
      */
-    protected function registerViewEngine(): void
+    protected function bootServiceProviders(): void
     {
-        $this->container->singleton('view.engine', function ($c) {
-            $engine = new Engine($this->basePath . '/views');
-            $engine->loadExtension(new PublicPath($this->basePath));
-            $engine->loadExtension(new AssetsPath());
-            return $engine;
-        });
-
-        // Alias cho Engine class
-        $this->container->singleton(Engine::class, fn($c) => $c->get('view.engine'));
+        foreach ($this->providers as $providerClass) {
+            $provider = new $providerClass($this->basePath);
+            $provider->boot($this->container);
+        }
     }
 
     /**
-     * Đăng ký View Services (ViewFactory, ViewRenderer) vào container
-     *
+     * Register a new service provider
+     * 
+     * @param string $providerClass
      * @return void
      */
-    protected function registerViewServices(): void
+    public function registerProvider(string $providerClass): void
     {
-        // Đăng ký ViewFactory như singleton
-        $this->container->singleton(ViewFactory::class, function ($c) {
-            return new ViewFactory(
-                $c->get('view.engine'),
-                $c->get('config')
-            );
-        });
-
-        // Đăng ký ViewRenderer như factory (mỗi lần get sẽ tạo instance mới)
-        $this->container->bind(ViewRenderer::class, function ($c) {
-            return $c->get(ViewFactory::class)->make();
-        });
-
-        // Alias ngắn gọn
-        $this->container->singleton('view', fn($c) => $c->get(ViewFactory::class));
+        if (!in_array($providerClass, $this->providers)) {
+            $this->providers[] = $providerClass;
+            
+            if ($this->bootstrapped) {
+                $provider = new $providerClass($this->basePath);
+                $provider->register($this->container);
+                $provider->boot($this->container);
+            }
+        }
     }
 
     /**
-     * Đăng ký HTTP Services (ResponseFactory) vào container
-     *
-     * @return void
-     */
-    protected function registerHttpServices(): void
-    {
-        // Đăng ký ResponseFactory như singleton
-        $this->container->singleton(ResponseFactory::class, function ($c) {
-            return new ResponseFactory($c->get(ViewFactory::class));
-        });
-
-        // Alias ngắn gọn
-        $this->container->singleton('response', fn($c) => $c->get(ResponseFactory::class));
-    }
-
-    /**
-     * Lấy Container instance
+     * Get DI Container
      * 
      * @return Container
      */
@@ -268,7 +141,7 @@ class Application
     }
 
     /**
-     * Lấy base path của ứng dụng
+     * Get app base path
      * 
      * @return string
      */
@@ -278,7 +151,7 @@ class Application
     }
 
     /**
-     * Kiểm tra app đã được bootstrap chưa
+     * Check if app is bootstrapped
      * 
      * @return bool
      */

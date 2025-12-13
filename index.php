@@ -1,16 +1,4 @@
 <?php
-
-/**
- * Application Entry Point
- *
- * File này là điểm khởi đầu của ứng dụng.
- * Workflow:
- * 1. Bootstrap Application với Container
- * 2. Setup Router với Container Strategy (auto-inject dependencies)
- * 3. Load routes từ routes/web.php
- * 4. Dispatch request và trả về response
- */
-
 use League\Route\Router;
 use Laminas\Diactoros\ServerRequestFactory;
 use League\Route\Strategy\ApplicationStrategy;
@@ -39,7 +27,6 @@ $routeSetup($router, $container);
 $request = ServerRequestFactory::fromGlobals();
 $response = $router->dispatch($request);
 
-// 5. Send response
 http_response_code($response->getStatusCode());
 foreach ($response->getHeaders() as $name => $values) {
     foreach ($values as $value) {
