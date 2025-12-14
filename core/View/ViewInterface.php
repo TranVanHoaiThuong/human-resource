@@ -2,45 +2,19 @@
 
 namespace App\Core\View;
 
-/**
- * View Interface
- * 
- * Interface định nghĩa contract cho View rendering
- */
+/** Interface định nghĩa contract cho View rendering */
 interface ViewInterface
 {
-    /**
-     * Render view và trả về HTML string
-     * 
-     * @param string $template Tên template (vd: 'home/index')
-     * @param array $data Dữ liệu truyền vào view
-     * @return string HTML content
-     */
+    /** Render view và trả về HTML string */
     public function render(string $template, array $data = []): string;
 
-    /**
-     * Set page title
-     * 
-     * @param string $title Page title
-     * @return self
-     */
+    /** Set page title */
     public function setTitle(string $title): self;
 
-    /**
-     * Thêm data vào view
-     * 
-     * @param string $key Key của data
-     * @param mixed $value Giá trị
-     * @return self
-     */
+    /** Thêm data vào view */
     public function with(string $key, mixed $value): self;
 
-    /**
-     * Thêm nhiều data vào view
-     * 
-     * @param array $data Mảng data
-     * @return self
-     */
+    /** Thêm nhiều data vào view */
     public function withData(array $data): self;
 }
 

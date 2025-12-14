@@ -11,25 +11,12 @@ use App\Core\Providers\ViewServiceProvider;
 use App\Core\Providers\HttpServiceProvider;
 use App\Core\Providers\TranslatorServiceProvider;
 
-/**
- * Application Class
- */
+/** Application bootstrap class */
 class Application
 {
-    /**
-     * @var Container DI Container instance
-     */
     protected Container $container;
-
-    /**
-     * @var bool App is bootstrapped
-     */
     protected bool $bootstrapped = false;
 
-    /**
-     * List of service providers
-     * @var array<string>
-     */
     protected array $providers = [
         ConfigServiceProvider::class,
         LoggingServiceProvider::class,
@@ -40,27 +27,16 @@ class Application
         TranslatorServiceProvider::class,
     ];
 
-    /**
-     * Constructor - Init Application
-     * 
-     * @param string $basePath Path of app. Example: __DIR__
-     */
     public function __construct(protected string $basePath)
     {
         $this->basePath = rtrim($basePath, '/');
         $this->container = new Container();
-        
-        // Register Application instance into container
+
         $this->container->instance(Application::class, $this);
         $this->container->instance(Container::class, $this->container);
     }
 
-    /**
-     * Bootstrap Application
-     * Load config, register service providers, boot services
-     * 
-     * @return void
-     */
+    /** Bootstrap application - load env, register & boot providers */
     public function bootstrap(): void
     {
         if ($this->bootstrapped) {
@@ -74,22 +50,12 @@ class Application
         $this->bootstrapped = true;
     }
 
-    /**
-     * Load environment variables from .env
-     * 
-     * @return void
-     */
     protected function loadEnvironment(): void
     {
         $dotenv = Dotenv::createImmutable($this->basePath);
         $dotenv->load();
     }
 
-    /**
-     * Register all service providers
-     * 
-     * @return void
-     */
     protected function registerServiceProviders(): void
     {
         foreach ($this->providers as $providerClass) {
@@ -98,11 +64,6 @@ class Application
         }
     }
 
-    /**
-     * Boot all service providers
-     * 
-     * @return void
-     */
     protected function bootServiceProviders(): void
     {
         foreach ($this->providers as $providerClass) {
@@ -111,17 +72,12 @@ class Application
         }
     }
 
-    /**
-     * Register a new service provider
-     * 
-     * @param string $providerClass
-     * @return void
-     */
+    /** Register a new service provider */
     public function registerProvider(string $providerClass): void
     {
         if (!in_array($providerClass, $this->providers)) {
             $this->providers[] = $providerClass;
-            
+
             if ($this->bootstrapped) {
                 $provider = new $providerClass($this->basePath);
                 $provider->register($this->container);
@@ -130,31 +86,16 @@ class Application
         }
     }
 
-    /**
-     * Get DI Container
-     * 
-     * @return Container
-     */
     public function getContainer(): Container
     {
         return $this->container;
     }
 
-    /**
-     * Get app base path
-     * 
-     * @return string
-     */
     public function getBasePath(): string
     {
         return $this->basePath;
     }
 
-    /**
-     * Check if app is bootstrapped
-     * 
-     * @return bool
-     */
     public function isBootstrapped(): bool
     {
         return $this->bootstrapped;

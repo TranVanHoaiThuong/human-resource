@@ -4,12 +4,7 @@ namespace App\Core;
 
 use Doctrine\DBAL\Connection;
 
-/**
- * Base Migration Class
- * 
- * Tất cả migration files đều extend từ class này.
- * Chỉ cần implement up() và down() methods.
- */
+/** Base Migration Class */
 abstract class Migration
 {
     protected Connection $db;
@@ -19,39 +14,26 @@ abstract class Migration
         $this->db = $db;
     }
 
-    /**
-     * Chạy migration (tạo table, thêm column, etc.)
-     */
+    /** Chạy migration */
     abstract public function up(): void;
 
-    /**
-     * Rollback migration (xóa table, xóa column, etc.)
-     */
+    /** Rollback migration */
     abstract public function down(): void;
 
-    /**
-     * Helper: Execute raw SQL
-     */
     protected function execute(string $sql): void
     {
         $this->db->executeStatement($sql);
     }
 
-    /**
-     * Helper: Create table với schema đơn giản
-     */
     protected function createTable(string $table, array $columns): void
     {
         $sql = "CREATE TABLE {$table} (\n";
         $sql .= implode(",\n", $columns);
         $sql .= "\n)";
-        
+
         $this->execute($sql);
     }
 
-    /**
-     * Helper: Drop table
-     */
     protected function dropTable(string $table): void
     {
         $this->execute("DROP TABLE IF EXISTS {$table}");

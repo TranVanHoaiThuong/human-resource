@@ -9,19 +9,6 @@ use App\Core\View\ViewFactory;
 
 /**
  * Response Factory
- * 
- * Factory class để tạo các loại PSR-7 Response.
- * Giúp Controller dễ dàng trả về HTML, JSON, Redirect responses.
- * 
- * @example
- * // HTML Response
- * return $response->view('home/index', ['user' => $user], 'Home Page');
- * 
- * // JSON Response
- * return $response->json(['status' => 'success', 'data' => $data]);
- * 
- * // Redirect Response
- * return $response->redirect('/dashboard');
  */
 class ResponseFactory
 {

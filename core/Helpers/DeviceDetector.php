@@ -5,8 +5,6 @@ namespace App\Core\Helpers;
 /**
  * Device Detector Helper
  * 
- * Helper class để detect device và browser từ User-Agent string.
- * Tách ra từ Auth class để dễ maintain và test.
  */
 class DeviceDetector
 {

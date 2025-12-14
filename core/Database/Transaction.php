@@ -7,7 +7,6 @@ use Doctrine\DBAL\Connection;
 /**
  * Database Transaction Helper
  * 
- * Helper class để quản lý database transactions
  */
 class Transaction
 {

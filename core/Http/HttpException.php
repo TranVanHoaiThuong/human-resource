@@ -8,8 +8,6 @@ use Throwable;
 /**
  * HTTP Exception
  * 
- * Exception class để throw các HTTP errors với status code cụ thể.
- * 
  * @example
  * throw new HttpException(404, 'Không tìm thấy trang');
  * throw HttpException::notFound('User không tồn tại');

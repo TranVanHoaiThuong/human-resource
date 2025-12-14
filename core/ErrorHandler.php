@@ -5,15 +5,7 @@ namespace App\Core;
 use League\Plates\Engine;
 use Throwable;
 
-/**
- * Error Handler
- * 
- * Xử lý tất cả errors, exceptions và fatal errors trong ứng dụng.
- * 
- * Quy tắc:
- * - APP_DEBUG=true: Show tất cả lỗi chi tiết (bất kể APP_ENV)
- * - APP_DEBUG=false: Ẩn warnings, chỉ show error pages cho fatal errors/exceptions
- */
+/** Xử lý errors, exceptions và fatal errors */
 class ErrorHandler
 {
     protected string $basePath;
@@ -29,56 +21,37 @@ class ErrorHandler
         $this->loadEnvironmentSettings();
     }
 
-    /**
-     * Load các settings từ environment variables
-     */
     protected function loadEnvironmentSettings(): void
     {
-        // APP_DEBUG có ưu tiên cao nhất
         $debug = $_ENV['APP_DEBUG'] ?? getenv('APP_DEBUG') ?? 'false';
         $this->debug = filter_var($debug, FILTER_VALIDATE_BOOLEAN);
-        
-        // APP_ENV để xác định môi trường
         $this->environment = strtolower($_ENV['APP_ENV'] ?? getenv('APP_ENV') ?? 'production');
     }
 
-    /**
-     * Đăng ký error và exception handlers
-     */
+    /** Đăng ký error và exception handlers */
     public function register(): void
     {
         $this->configurePhpSettings();
-        
+
         set_error_handler([$this, 'handleError']);
         set_exception_handler([$this, 'handleException']);
         register_shutdown_function([$this, 'handleShutdown']);
     }
 
-    /**
-     * Set view engine (dùng sau khi Application đã bootstrap)
-     */
     public function setViewEngine(Engine $engine): void
     {
         $this->viewEngine = $engine;
     }
 
-    /**
-     * Cấu hình PHP INI settings
-     * 
-     * APP_DEBUG=true: Show tất cả errors (kể cả warnings, notices)
-     * APP_DEBUG=false: Chỉ report fatal errors, không display
-     */
     protected function configurePhpSettings(): void
     {
         if ($this->debug) {
-            // Debug mode: Show TẤT CẢ errors và warnings (bất kể APP_ENV)
             error_reporting(E_ALL);
             ini_set('display_errors', '1');
             ini_set('display_startup_errors', '1');
             ini_set('log_errors', '1');
             ini_set('error_log', $this->basePath . '/logs/errors.log');
         } else {
-            // Non-debug: Chỉ report fatal errors, không display ra màn hình
             error_reporting(E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR);
             ini_set('display_errors', '0');
             ini_set('display_startup_errors', '0');
@@ -87,74 +60,45 @@ class ErrorHandler
         }
     }
 
-    /**
-     * Handle PHP errors
-     * 
-     * @param int $severity Error severity level
-     * @param string $message Error message
-     * @param string $file File where error occurred
-     * @param int $line Line number
-     * @return bool True to prevent default PHP error handler
-     */
-    public function handleError(
-        int $severity,
-        string $message,
-        string $file,
-        int $line
-    ): bool {
-        // Nếu error đã bị suppressed bởi @ operator
+    public function handleError(int $severity, string $message, string $file, int $line): bool
+    {
         if (!(error_reporting() & $severity)) {
             return false;
         }
 
-        // Debug mode: Convert TẤT CẢ errors thành exception để show chi tiết
         if ($this->debug) {
             throw new \ErrorException($message, 0, $severity, $file, $line);
         }
 
-        // Non-debug: Chỉ throw exception cho fatal errors
         $fatalErrors = E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR;
         if ($severity & $fatalErrors) {
             throw new \ErrorException($message, 0, $severity, $file, $line);
         }
 
-        // Warnings, notices: Log nhưng KHÔNG show ra màn hình
         $this->logError($message, $file, $line, $severity);
-        
-        return true; // Ngăn default PHP error handler
+
+        return true;
     }
 
-    /**
-     * Handle uncaught exceptions
-     * 
-     * @param Throwable $exception
-     */
     public function handleException(Throwable $exception): void
     {
         $statusCode = $this->getHttpStatusCode($exception);
-
-        // Log exception (luôn log bất kể debug hay không)
         $this->logException($exception);
 
         if ($this->debug) {
-            // Debug mode: Show chi tiết exception với stack trace
             $this->renderDebugException($exception, $statusCode);
         } else {
-            // Non-debug: Render error page đẹp
             $this->renderProductionError($statusCode, $exception);
         }
     }
 
-    /**
-     * Handle fatal errors on shutdown
-     */
     public function handleShutdown(): void
     {
         $error = error_get_last();
-        
+
         if ($error !== null) {
             $fatalErrors = E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR;
-            
+
             if ($error['type'] & $fatalErrors) {
                 $this->handleException(new \ErrorException(
                     $error['message'],

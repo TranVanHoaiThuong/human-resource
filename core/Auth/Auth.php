@@ -6,6 +6,7 @@ use Doctrine\DBAL\Connection;
 use App\Core\Logging\Logger;
 use App\Core\Helpers\DeviceDetector;
 
+/** Authentication service với session-based token */
 class Auth
 {
     protected Connection $db;
@@ -13,11 +14,10 @@ class Auth
     protected ?array $user = null;
     protected ?string $currentToken = null;
     protected bool $userLoaded = false;
-    
-    // Cookie settings
+
     protected string $cookieName = 'auth_token';
-    protected int $sessionLifetime = 86400 * 7; // 7 days
-    protected int $rememberLifetime = 86400 * 30; // 30 days
+    protected int $sessionLifetime = 86400 * 7;
+    protected int $rememberLifetime = 86400 * 30;
 
     public function __construct(Connection $db, ?Logger $logger = null)
     {
@@ -26,9 +26,7 @@ class Auth
         $this->loadUserFromCookie();
     }
 
-    /**
-     * Attempt to authenticate user
-     */
+    /** Xác thực user với username/password */
     public function attempt(string $username, string $password, bool $remember = false): bool
     {
         $user = $this->db->fetchAssociative(
@@ -46,13 +44,12 @@ class Auth
             return false;
         }
 
-        // Create session
         $token = $this->createSession($user['id'], $remember);
         $this->setAuthCookie($token, $remember);
-        
+
         $this->user = $user;
         $this->currentToken = $token;
-        
+
         if ($this->logger) {
             $this->logger->info('User logged in', [
                 'user_id' => $user['id'],
@@ -60,29 +57,23 @@ class Auth
                 'ip' => $this->getClientIp(),
             ]);
         }
-        
+
         return true;
     }
 
-    /**
-     * Check if user is authenticated
-     */
+    /** Kiểm tra user đã đăng nhập chưa */
     public function check(): bool
     {
         return $this->user() !== null;
     }
 
-    /**
-     * Check if user is guest
-     */
+    /** Kiểm tra user là guest */
     public function guest(): bool
     {
         return !$this->check();
     }
 
-    /**
-     * Get current authenticated user
-     */
+    /** Lấy thông tin user hiện tại */
     public function user(): ?array
     {
         if (!$this->userLoaded) {
@@ -91,46 +82,38 @@ class Auth
         return $this->user;
     }
 
-    /**
-     * Get current user ID
-     */
+    /** Lấy ID user hiện tại */
     public function id(): ?int
     {
         $user = $this->user();
         return $user ? (int) $user['id'] : null;
     }
 
-    /**
-     * Logout current device
-     */
+    /** Đăng xuất thiết bị hiện tại */
     public function logout(): void
     {
         if ($this->currentToken) {
             $this->db->delete('user_sessions', ['token' => $this->currentToken]);
         }
-        
+
         $this->clearAuthCookie();
         $this->user = null;
         $this->currentToken = null;
     }
 
-    /**
-     * Logout all devices for current user
-     */
+    /** Đăng xuất tất cả thiết bị */
     public function logoutAll(): void
     {
         if ($userId = $this->id()) {
             $this->db->delete('user_sessions', ['user_id' => $userId]);
         }
-        
+
         $this->clearAuthCookie();
         $this->user = null;
         $this->currentToken = null;
     }
 
-    /**
-     * Logout other devices (keep current)
-     */
+    /** Đăng xuất các thiết bị khác */
     public function logoutOtherDevices(): int
     {
         if (!$userId = $this->id()) {
@@ -143,9 +126,7 @@ class Auth
         );
     }
 
-    /**
-     * Get all sessions for current user
-     */
+    /** Lấy danh sách sessions của user */
     public function sessions(): array
     {
         if (!$userId = $this->id()) {
@@ -153,26 +134,22 @@ class Auth
         }
 
         $sessions = $this->db->fetchAllAssociative(
-            'SELECT id, token, device_info, ip_address, user_agent, last_activity, created_at 
-             FROM user_sessions 
+            'SELECT id, token, device_info, ip_address, user_agent, last_activity, created_at
+             FROM user_sessions
              WHERE user_id = ? AND expires_at > NOW()
              ORDER BY last_activity DESC',
             [$userId]
         );
 
-        // Mark current session
         foreach ($sessions as &$session) {
             $session['is_current'] = $session['token'] === $this->currentToken;
-            // Hide full token, show only last 8 chars
             $session['token_display'] = '...' . substr($session['token'], -8);
         }
 
         return $sessions;
     }
 
-    /**
-     * Revoke a specific session
-     */
+    /** Thu hồi một session cụ thể */
     public function revokeSession(int $sessionId): bool
     {
         if (!$userId = $this->id()) {
@@ -187,9 +164,7 @@ class Auth
         return $affected > 0;
     }
 
-    /**
-     * Update last activity timestamp
-     */
+    /** Cập nhật last activity */
     public function touchSession(): void
     {
         if ($this->currentToken) {
@@ -202,9 +177,7 @@ class Auth
         }
     }
 
-    /**
-     * Clean up expired sessions (call via cron)
-     */
+    /** Dọn dẹp sessions hết hạn */
     public function cleanupExpiredSessions(): int
     {
         return (int) $this->db->executeStatement(
@@ -212,12 +185,10 @@ class Auth
         );
     }
 
-    // ========== Protected Methods ==========
-
     protected function loadUserFromCookie(): void
     {
         $this->userLoaded = true;
-        
+
         $token = $_COOKIE[$this->cookieName] ?? null;
         if (!$token) {
             return;
@@ -246,8 +217,7 @@ class Auth
 
         $this->user = $user;
         $this->currentToken = $token;
-        
-        // Update last activity (mỗi 5 phút)
+
         $lastActivity = new \DateTimeImmutable($session['last_activity']);
         if ($lastActivity->diff(new \DateTimeImmutable())->i >= 5) {
             $this->touchSession();
@@ -256,7 +226,7 @@ class Auth
 
     protected function createSession(int $userId, bool $remember = false): string
     {
-        $token = bin2hex(random_bytes(32)); // 64 chars
+        $token = bin2hex(random_bytes(32));
         $lifetime = $remember ? $this->rememberLifetime : $this->sessionLifetime;
         $expiresAt = new \DateTimeImmutable("+{$lifetime} seconds");
 
@@ -283,7 +253,7 @@ class Auth
         $lifetime = $remember ? $this->rememberLifetime : $this->sessionLifetime;
         $expires = time() + $lifetime;
         $secure = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
-        
+
         setcookie($this->cookieName, $token, [
             'expires' => $expires,
             'path' => '/',
@@ -308,14 +278,14 @@ class Auth
     protected function getClientIp(): ?string
     {
         $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
-        
+
         foreach ($headers as $header) {
             if (!empty($_SERVER[$header])) {
                 $ip = explode(',', $_SERVER[$header])[0];
                 return trim($ip);
             }
         }
-        
+
         return null;
     }
 
