@@ -7,6 +7,7 @@
  */
 
 use App\Core\Container;
+use App\Core\AppHelper;
 
 if (!function_exists('route')) {
     /**
@@ -147,13 +148,16 @@ if (!function_exists('__')) {
      */
     function __(string $key, array $replace = []): string
     {
-        global $container;
-        
-        if (!$container || !$container->has(App\Core\Translator::class)) {
-            return $key;
+        try {
+            $container = AppHelper::container();
+            if ($container->has(\App\Core\Translator::class)) {
+                return $container->get(\App\Core\Translator::class)->get($key, $replace);
+            }
+        } catch (\RuntimeException $e) {
+            // Container chưa sẵn sàng, trả về key
         }
         
-        return $container->get(App\Core\Translator::class)->get($key, $replace);
+        return $key;
     }
 }
 
@@ -176,13 +180,16 @@ if (!function_exists('trans_module')) {
      */
     function trans_module(string $module): array
     {
-        global $container;
-        
-        if (!$container || !$container->has(App\Core\Translator::class)) {
-            return [];
+        try {
+            $container = AppHelper::container();
+            if ($container->has(\App\Core\Translator::class)) {
+                return $container->get(\App\Core\Translator::class)->getModule($module);
+            }
+        } catch (\RuntimeException $e) {
+            // Container chưa sẵn sàng
         }
         
-        return $container->get(App\Core\Translator::class)->getModule($module);
+        return [];
     }
 }
 
@@ -194,8 +201,7 @@ if (!function_exists('auth')) {
      */
     function auth(): \App\Core\Auth\Auth
     {
-        global $app;
-        return $app->getContainer()->get(\App\Core\Auth\Auth::class);
+        return AppHelper::container()->get(\App\Core\Auth\Auth::class);
     }
 }
 

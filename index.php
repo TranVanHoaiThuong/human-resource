@@ -4,11 +4,16 @@ use Laminas\Diactoros\ServerRequestFactory;
 use League\Route\Strategy\ApplicationStrategy;
 use App\Core\Application;
 use App\Core\ErrorHandler;
+use App\Core\AppHelper;
 
 require_once __DIR__ . '/vendor/autoload.php';
 
 $app = new Application(__DIR__);
 $app->bootstrap();
+
+// Set app vào AppHelper để helpers có thể access
+AppHelper::setApp($app);
+
 $container = $app->getContainer();
 
 $errorHandler = new ErrorHandler(__DIR__);

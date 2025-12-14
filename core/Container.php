@@ -6,37 +6,18 @@ use Closure;
 use Exception;
 use ReflectionClass;
 use ReflectionException;
+use ReflectionNamedType;
 use Psr\Container\ContainerInterface;
 
 /**
- * Dependency Injection Container (Improved)
+ * Dependency Injection Container (Simplified)
  *
- * Container cải thiện với các tính năng:
+ * Container với các tính năng:
  * - Singleton: Tạo một instance duy nhất và tái sử dụng
  * - Factory: Tạo instance mới mỗi lần resolve
  * - Auto-wiring: Tự động inject dependencies vào constructor
  * - Circular dependency detection: Phát hiện và báo lỗi circular dependency
  * - Interface binding: Bind interface với concrete class
- *
- * @example
- * // Đăng ký singleton
- * $container->singleton('db', function($c) {
- *     return new Database($c->get('config'));
- * });
- *
- * // Đăng ký factory
- * $container->bind('mailer', function($c) {
- *     return new Mailer($c->get('config'));
- * });
- *
- * // Interface binding
- * $container->alias(LoggerInterface::class, FileLogger::class);
- *
- * // Lấy instance
- * $db = $container->get('db');
- *
- * // Auto-resolve class với dependencies
- * $controller = $container->make(UserController::class);
  */
 class Container implements ContainerInterface
 {
@@ -80,19 +61,7 @@ class Container implements ContainerInterface
      */
     public function bind(string $abstract, Closure|string|null $concrete = null): void
     {
-        // Nếu không có concrete, dùng abstract làm concrete (auto-bind)
-        if ($concrete === null) {
-            $concrete = $abstract;
-        }
-
-        // Nếu concrete là string (class name), tạo closure
-        if (is_string($concrete) && !$concrete instanceof Closure) {
-            $concreteClass = $concrete;
-            $concrete = function ($c) use ($concreteClass) {
-                return $c->make($concreteClass);
-            };
-        }
-
+        $concrete = $this->normalizeConcrete($abstract, $concrete);
         $this->bindings[$abstract] = $concrete;
         $this->singletons[$abstract] = false;
     }
@@ -107,19 +76,7 @@ class Container implements ContainerInterface
      */
     public function singleton(string $abstract, Closure|string|null $concrete = null): void
     {
-        // Nếu không có concrete, dùng abstract làm concrete (auto-bind)
-        if ($concrete === null) {
-            $concrete = $abstract;
-        }
-
-        // Nếu concrete là string (class name), tạo closure
-        if (is_string($concrete) && !$concrete instanceof Closure) {
-            $concreteClass = $concrete;
-            $concrete = function ($c) use ($concreteClass) {
-                return $c->make($concreteClass);
-            };
-        }
-
+        $concrete = $this->normalizeConcrete($abstract, $concrete);
         $this->bindings[$abstract] = $concrete;
         $this->singletons[$abstract] = true;
     }
@@ -158,48 +115,25 @@ class Container implements ContainerInterface
      */
     public function get(string $abstract): mixed
     {
-        // Kiểm tra circular dependency
-        if (isset($this->resolving[$abstract])) {
-            throw new Exception(
-                "Circular dependency detected: " . 
-                implode(' -> ', array_keys($this->resolving)) . " -> {$abstract}"
-            );
-        }
+        $this->checkCircularDependency($abstract);
 
         // Nếu đã có instance (singleton), trả về luôn
         if (isset($this->instances[$abstract])) {
             return $this->instances[$abstract];
         }
 
-        // Kiểm tra alias (interface binding)
-        if (isset($this->aliases[$abstract])) {
-            $concrete = $this->aliases[$abstract];
-            if (is_string($concrete)) {
-                return $this->get($concrete);
-            }
-            if ($concrete instanceof Closure) {
-                $abstractAlias = $abstract . '@alias';
-                $this->bindings[$abstractAlias] = $concrete;
-                $abstract = $abstractAlias;
-            }
-        }
+        // Xử lý alias (interface binding)
+        $abstract = $this->resolveAlias($abstract);
 
         // Đánh dấu đang resolve
         $this->resolving[$abstract] = true;
 
         try {
-            // Nếu không có binding, thử auto-resolve class
-            if (!isset($this->bindings[$abstract])) {
-                $instance = $this->make($abstract);
-            } else {
-                // Gọi factory function để tạo instance
-                $concrete = $this->bindings[$abstract];
-                $instance = $concrete($this);
-
-                // Nếu là singleton, lưu lại instance
-                if ($this->singletons[$abstract] ?? false) {
-                    $this->instances[$abstract] = $instance;
-                }
+            $instance = $this->resolveBinding($abstract);
+            
+            // Nếu là singleton, lưu lại instance
+            if ($this->singletons[$abstract] ?? false) {
+                $this->instances[$abstract] = $instance;
             }
 
             return $instance;
@@ -218,21 +152,10 @@ class Container implements ContainerInterface
      */
     public function make(string $class): mixed
     {
-        // Kiểm tra circular dependency
-        if (isset($this->resolving[$class])) {
-            throw new Exception(
-                "Circular dependency detected: " . 
-                implode(' -> ', array_keys($this->resolving)) . " -> {$class}"
-            );
-        }
+        $this->checkCircularDependency($class);
 
-        // Kiểm tra alias
-        if (isset($this->aliases[$class])) {
-            $concrete = $this->aliases[$class];
-            if (is_string($concrete)) {
-                return $this->make($concrete);
-            }
-        }
+        // Xử lý alias
+        $class = $this->resolveAlias($class);
 
         try {
             $reflector = new ReflectionClass($class);
@@ -256,54 +179,7 @@ class Container implements ContainerInterface
         $this->resolving[$class] = true;
 
         try {
-            // Lấy danh sách parameters của constructor
-            $parameters = $constructor->getParameters();
-            $dependencies = [];
-
-            foreach ($parameters as $parameter) {
-                $type = $parameter->getType();
-
-                // Nếu parameter không có type hint, không thể auto-resolve
-                if (is_null($type)) {
-                    // Kiểm tra có default value không
-                    if ($parameter->isDefaultValueAvailable()) {
-                        $dependencies[] = $parameter->getDefaultValue();
-                    } else {
-                        throw new Exception(
-                            "Không thể resolve parameter \${$parameter->getName()} của class {$class}. " .
-                            "Parameter cần có type hint hoặc default value."
-                        );
-                    }
-                } elseif ($type instanceof \ReflectionNamedType) {
-                    // Kiểm tra nếu là built-in type
-                    if ($type->isBuiltin()) {
-                        // Kiểm tra có default value không
-                        if ($parameter->isDefaultValueAvailable()) {
-                            $dependencies[] = $parameter->getDefaultValue();
-                        } else {
-                            throw new Exception(
-                                "Không thể resolve parameter \${$parameter->getName()} của class {$class}. " .
-                                "Parameter cần có type hint hoặc default value."
-                            );
-                        }
-                    } else {
-                        // Resolve dependency từ container
-                        $typeName = $type->getName();
-                        $dependencies[] = $this->get($typeName);
-                    }
-                } else {
-                    // Union types hoặc intersection types - không hỗ trợ auto-resolve
-                    if ($parameter->isDefaultValueAvailable()) {
-                        $dependencies[] = $parameter->getDefaultValue();
-                    } else {
-                        throw new Exception(
-                            "Không thể resolve parameter \${$parameter->getName()} của class {$class}. " .
-                            "Union/Intersection types không được hỗ trợ auto-resolve."
-                        );
-                    }
-                }
-            }
-
+            $dependencies = $this->resolveDependencies($constructor, $class);
             return $reflector->newInstanceArgs($dependencies);
         } finally {
             // Xóa đánh dấu resolving
@@ -351,6 +227,170 @@ class Container implements ContainerInterface
         $this->singletons = [];
         $this->aliases = [];
         $this->resolving = [];
+    }
+
+    // ==================== Protected Helper Methods ====================
+
+    /**
+     * Normalize concrete value (string hoặc closure)
+     * 
+     * @param string $abstract
+     * @param Closure|string|null $concrete
+     * @return Closure
+     */
+    protected function normalizeConcrete(string $abstract, Closure|string|null $concrete): Closure
+    {
+        // Nếu không có concrete, dùng abstract làm concrete (auto-bind)
+        if ($concrete === null) {
+            $concrete = $abstract;
+        }
+
+        // Nếu concrete là string (class name), tạo closure
+        if (is_string($concrete)) {
+            $concreteClass = $concrete;
+            return function ($c) use ($concreteClass) {
+                return $c->make($concreteClass);
+            };
+        }
+
+        return $concrete;
+    }
+
+    /**
+     * Kiểm tra circular dependency
+     * 
+     * @param string $abstract
+     * @return void
+     * @throws Exception Nếu phát hiện circular dependency
+     */
+    protected function checkCircularDependency(string $abstract): void
+    {
+        if (isset($this->resolving[$abstract])) {
+            $chain = implode(' -> ', array_keys($this->resolving)) . " -> {$abstract}";
+            throw new Exception("Circular dependency detected: {$chain}");
+        }
+    }
+
+    /**
+     * Resolve alias (interface binding)
+     * 
+     * @param string $abstract
+     * @return string
+     */
+    protected function resolveAlias(string $abstract): string
+    {
+        if (!isset($this->aliases[$abstract])) {
+            return $abstract;
+        }
+
+        $concrete = $this->aliases[$abstract];
+        
+        if (is_string($concrete)) {
+            return $concrete;
+        }
+        
+        if ($concrete instanceof Closure) {
+            // Tạo binding tạm thời cho alias
+            $aliasKey = $abstract . '@alias';
+            $this->bindings[$aliasKey] = $concrete;
+            return $aliasKey;
+        }
+
+        return $abstract;
+    }
+
+    /**
+     * Resolve binding từ container
+     * 
+     * @param string $abstract
+     * @return mixed
+     */
+    protected function resolveBinding(string $abstract): mixed
+    {
+        // Nếu không có binding, thử auto-resolve class
+        if (!isset($this->bindings[$abstract])) {
+            return $this->make($abstract);
+        }
+
+        // Gọi factory function để tạo instance
+        $concrete = $this->bindings[$abstract];
+        return $concrete($this);
+    }
+
+    /**
+     * Resolve dependencies cho constructor
+     * 
+     * @param \ReflectionMethod $constructor
+     * @param string $class
+     * @return array
+     * @throws Exception
+     */
+    protected function resolveDependencies(\ReflectionMethod $constructor, string $class): array
+    {
+        $parameters = $constructor->getParameters();
+        $dependencies = [];
+
+        foreach ($parameters as $parameter) {
+            $dependencies[] = $this->resolveParameter($parameter, $class);
+        }
+
+        return $dependencies;
+    }
+
+    /**
+     * Resolve một parameter
+     * 
+     * @param \ReflectionParameter $parameter
+     * @param string $class
+     * @return mixed
+     * @throws Exception
+     */
+    protected function resolveParameter(\ReflectionParameter $parameter, string $class): mixed
+    {
+        $type = $parameter->getType();
+
+        // Nếu parameter không có type hint
+        if (is_null($type)) {
+            return $this->getDefaultValue($parameter, $class);
+        }
+
+        // Nếu là ReflectionNamedType
+        if ($type instanceof ReflectionNamedType) {
+            // Built-in types (string, int, array, etc.)
+            if ($type->isBuiltin()) {
+                return $this->getDefaultValue($parameter, $class);
+            }
+
+            // Class type - resolve từ container
+            $typeName = $type->getName();
+            return $this->get($typeName);
+        }
+
+        // Union types hoặc intersection types - không hỗ trợ auto-resolve
+        return $this->getDefaultValue($parameter, $class);
+    }
+
+    /**
+     * Lấy default value hoặc throw exception
+     * 
+     * @param \ReflectionParameter $parameter
+     * @param string $class
+     * @return mixed
+     * @throws Exception
+     */
+    protected function getDefaultValue(\ReflectionParameter $parameter, string $class): mixed
+    {
+        if ($parameter->isDefaultValueAvailable()) {
+            return $parameter->getDefaultValue();
+        }
+
+        $paramName = $parameter->getName();
+        $typeHint = $parameter->getType()?->getName() ?? 'unknown';
+        
+        throw new Exception(
+            "Không thể resolve parameter \${$paramName} ({$typeHint}) của class {$class}. " .
+            "Parameter cần có type hint (class) hoặc default value."
+        );
     }
 }
 

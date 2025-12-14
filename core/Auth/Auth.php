@@ -4,6 +4,7 @@ namespace App\Core\Auth;
 
 use Doctrine\DBAL\Connection;
 use App\Core\Logging\Logger;
+use App\Core\Helpers\DeviceDetector;
 
 class Auth
 {
@@ -321,38 +322,6 @@ class Auth
     protected function getDeviceInfo(): string
     {
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
-        
-        // Simple device detection
-        $device = 'Unknown Device';
-        
-        if (preg_match('/Windows/i', $userAgent)) {
-            $device = 'Windows';
-        } elseif (preg_match('/Macintosh|Mac OS/i', $userAgent)) {
-            $device = 'macOS';
-        } elseif (preg_match('/Linux/i', $userAgent)) {
-            $device = 'Linux';
-        } elseif (preg_match('/iPhone/i', $userAgent)) {
-            $device = 'iPhone';
-        } elseif (preg_match('/iPad/i', $userAgent)) {
-            $device = 'iPad';
-        } elseif (preg_match('/Android/i', $userAgent)) {
-            $device = 'Android';
-        }
-        
-        // Browser detection
-        $browser = 'Unknown Browser';
-        if (preg_match('/Chrome/i', $userAgent) && !preg_match('/Edge|Edg/i', $userAgent)) {
-            $browser = 'Chrome';
-        } elseif (preg_match('/Firefox/i', $userAgent)) {
-            $browser = 'Firefox';
-        } elseif (preg_match('/Safari/i', $userAgent) && !preg_match('/Chrome/i', $userAgent)) {
-            $browser = 'Safari';
-        } elseif (preg_match('/Edge|Edg/i', $userAgent)) {
-            $browser = 'Edge';
-        } elseif (preg_match('/Opera|OPR/i', $userAgent)) {
-            $browser = 'Opera';
-        }
-        
-        return "{$browser} on {$device}";
+        return DeviceDetector::detect($userAgent);
     }
 }
