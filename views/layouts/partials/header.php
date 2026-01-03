@@ -1,15 +1,17 @@
 <header class="app-header h-16 bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
-    <div class="w-full h-full px-4">
+    <div class="w-full h-full px-6">
         <div class="flex items-center justify-between h-full">
-            <div class="flex items-center gap-4">
-                <button type="button" class="sidebar-toggle p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
+            <div class="flex items-center gap-2">
+                <button type="button" class="sidebar-toggle p-1 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    <i class="fa-solid fa-bars text-xl"></i>
                 </button>
-                <span class="text-lg font-semibold text-gray-700">
-                    <?= $this->e($title ?? 'Dashboard') ?>
-                </span>
+                <div class="h-[30px] bg-gray-300 w-[1px]"></div>
+                <div class="header-search w-[300px]">
+                    <div class="flex items-center px-4 py-[6px] border border-gray-300 rounded-2xl w-full gap-2">
+                        <input id="global-search" class="w-full text-sm text-gray-700 outline-none" placeholder="<?= trans('common.type_to_search') ?>"/>
+                        <i class="fa-solid fa-magnifying-glass text-gray-500 text-sm"></i>
+                    </div>
+                </div>
             </div>
             
             <!-- User dropdown -->

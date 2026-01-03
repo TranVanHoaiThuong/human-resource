@@ -15,11 +15,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('app-sidebar');
     const appContent = document.getElementById('app-content');
     const sidebarToggle = document.querySelector('.sidebar-toggle');
+    let isHoverExpanded = false;
     
     // Khôi phục trạng thái
     const savedState = localStorage.getItem('sidebarCollapsed');
     if (savedState === 'true') {
-        collapseSidebar(false);
+        collapseSidebar(true);
     }
     
     // Toggle sidebar
@@ -33,8 +34,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    sidebar.addEventListener('mouseenter', function() {
+        if (sidebar.dataset.collapsed === 'true' && !isHoverExpanded) {
+            isHoverExpanded = true;
+            expandSidebar(true, true);
+        }
+    });
     
-    function collapseSidebar(animate = true) {
+    sidebar.addEventListener('mouseleave', function() {
+        if (isHoverExpanded) {
+            isHoverExpanded = false;
+            collapseSidebar(true, true);
+        }
+    });
+    
+    function collapseSidebar(animate = true, hover = false) {
         if (!animate) {
             sidebar.style.transition = 'none';
             appContent.style.transition = 'none';
@@ -74,7 +89,9 @@ document.addEventListener('DOMContentLoaded', function() {
             el.querySelectorAll(':scope > i.collapsed-icon').forEach(i => i.classList.remove('hidden'));
         });
         
-        localStorage.setItem('sidebarCollapsed', 'true');
+        if (!hover) {
+            localStorage.setItem('sidebarCollapsed', 'true');
+        }
         
         if (!animate) {
             requestAnimationFrame(() => {
@@ -84,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function expandSidebar(animate = true) {
+    function expandSidebar(animate = true, hover = false) {
         if (!animate) {
             sidebar.style.transition = 'none';
             appContent.style.transition = 'none';
@@ -114,7 +131,9 @@ document.addEventListener('DOMContentLoaded', function() {
         sidebar.querySelectorAll('.submenu-toggle > div').forEach(el => el.classList.remove('hidden'));
         sidebar.querySelectorAll('.collapsed-icon').forEach(el => el.classList.add('hidden'));
         
-        localStorage.setItem('sidebarCollapsed', 'false');
+        if (!hover) {
+            localStorage.setItem('sidebarCollapsed', 'false');
+        }
         
         if (!animate) {
             requestAnimationFrame(() => {
@@ -128,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.submenu-toggle').forEach(toggle => {
         toggle.addEventListener('click', function(e) {
             e.preventDefault();
-            if (sidebar.dataset.collapsed === 'true') return;
+            if (sidebar.dataset.collapsed === 'true' && !isHoverExpanded) return;
             
             const parentLi = this.closest('.has-submenu');
             const submenu = parentLi.querySelector(':scope > .submenu');

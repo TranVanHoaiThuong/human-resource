@@ -26,4 +26,5 @@ return [
     // Status
     'active' => 'Active',
     'inactive' => 'Inactive',
+    'type_to_search' => 'Type to search...'
 ];

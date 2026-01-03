@@ -26,4 +26,5 @@ return [
     // Status
     'active' => 'Hoạt động',
     'inactive' => 'Ngừng hoạt động',
+    'type_to_search' => 'Nhập để tìm kiếm...'
 ];
