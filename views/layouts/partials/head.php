@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="<?= $this->asset('/alertifyjs/css/alertify.min.css') ?>">
 <link rel="stylesheet" href="<?= $this->asset('/alertifyjs/css/themes/default.min.css') ?>">
 <link rel="stylesheet" href="<?= $this->asset('/fontawesome/css/all.min.css') ?>" />
+<link rel="stylesheet" href="<?= $this->asset('/fonts/font.css') ?>" />
 <link rel="stylesheet" href="<?= $this->public('/css/tailwind') ?>">
 <link rel="stylesheet" href="<?= $this->public('/css/app') ?>">
 
