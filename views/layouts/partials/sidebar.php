@@ -1,77 +1,101 @@
-<aside class="app-sidebar">
-    <nav class="sidebar-nav">
-        <ul class="nav flex-column">
+<aside id="app-sidebar" class="fixed left-0 top-0 h-screen w-64 bg-slate-800 text-white transition-all duration-300 z-40 flex flex-col" data-collapsed="false">
+    
+    <!-- Logo / Brand - Phần header của sidebar -->
+    <div class="h-16 flex items-center justify-center border-b border-slate-700 flex-shrink-0">
+        <a href="/" class="flex items-center gap-3">
+            <i class="fa-solid fa-building text-2xl text-primary-400"></i>
+        </a>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="sidebar-nav flex-1 overflow-y-auto py-4">
+        <ul class="space-y-1 px-3">
             <!-- Dashboard -->
             <li class="nav-item">
-                <a class="nav-link <?= $active_menu === 'dashboard' ? 'active' : '' ?>" 
-                   href="/dashboard">
-                    <i class="bi bi-speedometer2"></i>
-                    <span>Dashboard</span>
+                <a href="/dashboard" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-700 transition-colors <?= $active_menu === 'dashboard' ? 'bg-slate-700 text-primary-400' : '' ?>">
+                    <i class="fa-solid fa-gauge-high w-5 text-center flex-shrink-0"></i>
+                    <span class="nav-text whitespace-nowrap">Dashboard</span>
                 </a>
             </li>
             
-            <!-- Quản lý nhân viên -->
+            <!-- Menu có submenu -->
+            <li class="nav-item has-submenu">
+                <button type="button" class="submenu-toggle w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-700 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-users w-5 text-center flex-shrink-0"></i>
+                        <span class="nav-text whitespace-nowrap">Nhân sự</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right toggle-icon transition-transform duration-200 text-xs"></i>
+                </button>
+                <ul class="submenu pl-4 mt-1 space-y-1 hidden">
+                    <li>
+                        <a href="/employees" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-700 transition-colors text-sm">
+                            <i class="fa-solid fa-user w-4 text-center flex-shrink-0"></i>
+                            <span class="nav-text">Nhân viên</span>
+                        </a>
+                    </li>
+                    <li class="has-submenu">
+                        <button type="button" class="submenu-toggle w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-slate-700 transition-colors text-sm">
+                            <div class="flex items-center gap-3">
+                                <i class="fa-solid fa-building w-4 text-center flex-shrink-0"></i>
+                                <span class="nav-text">Phòng ban</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-right toggle-icon transition-transform duration-200 text-sm"></i>
+                        </button>
+                        <ul class="submenu pl-4 mt-1 space-y-1 hidden">
+                            <li>
+                                <a href="/departments/list" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition-colors text-sm">
+                                    <i class="fa-solid fa-list w-3 text-center flex-shrink-0"></i>
+                                    <span class="nav-text">Danh sách</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/departments/tree" class="flex items-center gap-3 px-3 py-1.5 rounded-lg hover:bg-slate-700 transition-colors text-sm">
+                                    <i class="fa-solid fa-sitemap w-3 text-center flex-shrink-0"></i>
+                                    <span class="nav-text">Sơ đồ</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            
+            <!-- Các menu khác -->
             <li class="nav-item">
-                <a class="nav-link <?= $active_menu === 'employees' ? 'active' : '' ?>" 
-                   href="/employees">
-                    <i class="bi bi-people"></i>
-                    <span>Nhân viên</span>
+                <a href="/attendance" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-calendar-check w-5 text-center flex-shrink-0"></i>
+                    <span class="nav-text whitespace-nowrap">Chấm công</span>
                 </a>
             </li>
             
-            <!-- Phòng ban -->
             <li class="nav-item">
-                <a class="nav-link <?= $active_menu === 'departments' ? 'active' : '' ?>" 
-                   href="/departments">
-                    <i class="bi bi-building"></i>
-                    <span>Phòng ban</span>
+                <a href="/leaves" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-calendar-xmark w-5 text-center flex-shrink-0"></i>
+                    <span class="nav-text whitespace-nowrap">Nghỉ phép</span>
                 </a>
             </li>
             
-            <!-- Chấm công -->
             <li class="nav-item">
-                <a class="nav-link <?= $active_menu === 'attendance' ? 'active' : '' ?>" 
-                   href="/attendance">
-                    <i class="bi bi-calendar-check"></i>
-                    <span>Chấm công</span>
+                <a href="/payroll" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-money-bill-wave w-5 text-center flex-shrink-0"></i>
+                    <span class="nav-text whitespace-nowrap">Lương</span>
                 </a>
             </li>
             
-            <!-- Nghỉ phép -->
             <li class="nav-item">
-                <a class="nav-link <?= $active_menu === 'leaves' ? 'active' : '' ?>" 
-                   href="/leaves">
-                    <i class="bi bi-calendar-x"></i>
-                    <span>Nghỉ phép</span>
+                <a href="/reports" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-chart-pie w-5 text-center flex-shrink-0"></i>
+                    <span class="nav-text whitespace-nowrap">Báo cáo</span>
                 </a>
             </li>
             
-            <!-- Lương -->
-            <li class="nav-item">
-                <a class="nav-link <?= $active_menu === 'payroll' ? 'active' : '' ?>" 
-                   href="/payroll">
-                    <i class="bi bi-cash-stack"></i>
-                    <span>Lương</span>
-                </a>
-            </li>
+            <!-- Divider -->
+            <li class="nav-divider border-t border-slate-600 my-3"></li>
             
-            <!-- Báo cáo -->
             <li class="nav-item">
-                <a class="nav-link <?= $active_menu === 'reports' ? 'active' : '' ?>" 
-                   href="/reports">
-                    <i class="bi bi-file-earmark-text"></i>
-                    <span>Báo cáo</span>
-                </a>
-            </li>
-            
-            <li class="nav-divider"></li>
-            
-            <!-- Cài đặt -->
-            <li class="nav-item">
-                <a class="nav-link <?= $active_menu === 'settings' ? 'active' : '' ?>" 
-                   href="/settings">
-                    <i class="bi bi-gear"></i>
-                    <span>Cài đặt</span>
+                <a href="/settings" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-700 transition-colors">
+                    <i class="fa-solid fa-gear w-5 text-center flex-shrink-0"></i>
+                    <span class="nav-text whitespace-nowrap">Cài đặt</span>
                 </a>
             </li>
         </ul>

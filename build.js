@@ -6,11 +6,15 @@ import fs from 'fs';
 const SOURCE_DIR = 'resources/js';
 const OUTPUT_DIR = 'public/js';
 
+// Kiểm tra mode từ argument
+const isDev = process.argv.includes('--dev');
+
 /**
  * Build tất cả JS files và giữ nguyên cấu trúc thư mục
  */
 async function build() {
-  console.log('🔨 Building JavaScript files...\n');
+  const mode = isDev ? 'DEVELOPMENT' : 'PRODUCTION';
+  console.log(`🔨 Building JavaScript files... [${mode}]\n`);
 
   // Tìm tất cả .js files trong js/
   const files = await glob(`${SOURCE_DIR}/**/*.js`);
@@ -21,6 +25,23 @@ async function build() {
   }
 
   console.log(`📦 Found ${files.length} files to build:\n`);
+
+  // Cấu hình theo mode
+  const buildOptions = isDev
+    ? {
+        // DEVELOPMENT: giữ debugger, không minify, có sourcemap
+        minify: false,
+        sourcemap: 'inline',
+        keepNames: true,
+        drop: [],
+      }
+    : {
+        // PRODUCTION: minify, xóa debugger + console, không sourcemap
+        minify: true,
+        sourcemap: false,
+        keepNames: false,
+        drop: ['debugger', 'console'],
+      };
 
   // Build từng file
   for (const file of files) {
@@ -39,16 +60,24 @@ async function build() {
         fs.mkdirSync(outputDir, { recursive: true });
       }
 
+      // Xóa file .map cũ nếu build production
+      if (!isDev) {
+        const mapFile = outputPath + '.map';
+        if (fs.existsSync(mapFile)) {
+          fs.unlinkSync(mapFile);
+        }
+      }
+
       // Build file
       await esbuild.build({
         entryPoints: [file],
         bundle: true,
-        minify: true,
-        sourcemap: true,
         outfile: outputPath,
         format: 'iife',
         globalName: getGlobalName(relativePath),
         external: ['jquery', 'kendo'],
+        // Spread build options theo mode
+        ...buildOptions,
       });
 
       console.log(`✅ ${file} → ${outputPath}`);
@@ -57,7 +86,18 @@ async function build() {
     }
   }
 
-  console.log('\n🎉 Build completed!');
+  console.log(`\n🎉 Build completed! [${mode}]`);
+  
+  if (isDev) {
+    console.log('   ℹ️  debugger statements: kept');
+    console.log('   ℹ️  console.log: kept');
+    console.log('   ℹ️  sourcemap: inline');
+  } else {
+    console.log('   ℹ️  debugger statements: removed');
+    console.log('   ℹ️  console.log: removed');
+    console.log('   ℹ️  sourcemap: none');
+    console.log('   ℹ️  minified: yes');
+  }
 }
 
 /**

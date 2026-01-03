@@ -1,1 +1,1 @@
-{"version":3,"sourceRoot":"","sources":["../../resources/scss/_base.scss","../../resources/scss/_variables.scss"],"names":[],"mappings":"AAGA,KACI,YCIU,oBDHV,SACA,UACA","file":"app.min.css"}
+{"version":3,"sourceRoot":"","sources":["../../resources/scss/_base.scss","../../resources/scss/_variables.scss","../../resources/scss/components/sidebar.scss"],"names":[],"mappings":"AAGA,KACI,YCIU,oBDHV,SACA,UACA,sBEPJ,aACI,qBACA,iDAGJ,gCACI,UAGJ,sCACI,8BACA","file":"app.min.css"}
