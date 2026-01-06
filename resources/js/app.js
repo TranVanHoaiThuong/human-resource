@@ -1,3 +1,12 @@
+const GLOBAL_APP_SELECTORS = {
+    body: 'body',
+    appSidebar: 'app-sidebar',
+    appContent: 'app-content',
+    sidebarToggle: '.sidebar-toggle',
+    dropdown: '.dropdown-toggle',
+    dropdownToggleBtn: '.dropdown-toggle-btn'
+}
+
 // Ajax setup
 $.ajaxSetup({
     beforeSend: function() {
@@ -12,9 +21,9 @@ $.ajaxSetup({
 });
 
 document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.getElementById('app-sidebar');
-    const appContent = document.getElementById('app-content');
-    const sidebarToggle = document.querySelector('.sidebar-toggle');
+    const sidebar = document.getElementById(GLOBAL_APP_SELECTORS.appSidebar);
+    const appContent = document.getElementById(GLOBAL_APP_SELECTORS.appContent);
+    const sidebarToggle = document.querySelector(GLOBAL_APP_SELECTORS.sidebarToggle);
     let isHoverExpanded = false;
     
     // Khôi phục trạng thái
@@ -143,7 +152,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Submenu toggle (giữ nguyên như trước)
     document.querySelectorAll('.submenu-toggle').forEach(toggle => {
         toggle.addEventListener('click', function(e) {
             e.preventDefault();
@@ -188,16 +196,30 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
-    // User dropdown
-    const userMenuBtn = document.getElementById('user-menu-btn');
-    const userMenuDropdown = document.getElementById('user-menu-dropdown');
-    if (userMenuBtn && userMenuDropdown) {
-        userMenuBtn.addEventListener('click', () => userMenuDropdown.classList.toggle('hidden'));
-        document.addEventListener('click', (e) => {
-            if (!userMenuBtn.contains(e.target) && !userMenuDropdown.contains(e.target)) {
-                userMenuDropdown.classList.add('hidden');
+});
+
+$(document).ready(function() {
+    // Dropdown toggle
+    $(document).on('click', GLOBAL_APP_SELECTORS.dropdownToggleBtn, function(e) {
+        e.stopPropagation();
+        const dropdownId = $(this).data('dropdown');
+        $(GLOBAL_APP_SELECTORS.dropdown).each(function() {
+            if ($(this).attr('id') !== dropdownId) {
+                $(this).removeClass('show');
             }
         });
-    }
+        if (!dropdownId) return;
+        const dropdown = $('#' + dropdownId);
+        if (dropdown.length === 0) return;
+        dropdown.toggleClass('show');
+    });
+
+    $(document).on('click', function(e) {
+        const isClickInsideDropdown = $(e.target).closest(GLOBAL_APP_SELECTORS.dropdown).length > 0;
+        const isClickOnToggleBtn = $(e.target).closest(GLOBAL_APP_SELECTORS.dropdownToggleBtn).length > 0;
+        
+        if (!isClickInsideDropdown && !isClickOnToggleBtn) {
+            $(GLOBAL_APP_SELECTORS.dropdown).removeClass('show');
+        }
+    });
 });
